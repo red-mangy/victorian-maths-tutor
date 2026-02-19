@@ -88,16 +88,16 @@ export async function POST(request: NextRequest) {
 
       if (existingInteraction) {
         // Update existing interaction (this is a retry)
-        const updateData: Database['public']['Tables']['question_interactions']['Update'] = {
-          student_answer: studentAnswer,
-          is_correct: evaluation.is_correct,
-          llm_evaluation: JSON.stringify(evaluation),
-          llm_feedback: evaluation.feedback,
-        };
+        type QuestionUpdate = Database['public']['Tables']['question_interactions']['Update'];
 
-        await supabase
-          .from('question_interactions')
-          .update(updateData)
+        await (supabase
+          .from('question_interactions') as any)
+          .update({
+            student_answer: studentAnswer,
+            is_correct: evaluation.is_correct,
+            llm_evaluation: JSON.stringify(evaluation),
+            llm_feedback: evaluation.feedback,
+          } satisfies QuestionUpdate)
           .eq('id', existingInteraction.id);
 
         console.log('[API] Updated existing question interaction (retry)');
@@ -130,14 +130,14 @@ export async function POST(request: NextRequest) {
         } else {
           console.log('[API] Question count for session:', count);
 
-          const sessionUpdateData: Database['public']['Tables']['learning_sessions']['Update'] = {
-            questions_completed: count || 0,
-            updated_at: new Date().toISOString()
-          };
+          type SessionUpdate = Database['public']['Tables']['learning_sessions']['Update'];
 
-          const { error: updateError } = await supabase
-            .from('learning_sessions')
-            .update(sessionUpdateData)
+          const { error: updateError } = await (supabase
+            .from('learning_sessions') as any)
+            .update({
+              questions_completed: count || 0,
+              updated_at: new Date().toISOString()
+            } satisfies SessionUpdate)
             .eq('id', sessionId);
 
           if (updateError) {
