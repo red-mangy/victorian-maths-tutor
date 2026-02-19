@@ -171,7 +171,7 @@ export async function getTopicById(topicId: string): Promise<CurriculumTopic | n
 /**
  * Get all progress for a student
  */
-export async function getStudentProgress(studentId: string): Promise<StudentProgress[]> {
+export async function getStudentProgress(studentId: string): Promise<(StudentProgress & { topic: CurriculumTopic })[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -185,7 +185,7 @@ export async function getStudentProgress(studentId: string): Promise<StudentProg
     return [];
   }
 
-  return data || [];
+  return (data || []) as (StudentProgress & { topic: CurriculumTopic })[];
 }
 
 /**

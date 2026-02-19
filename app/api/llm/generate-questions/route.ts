@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getStudentByAuthId, getTopicById, getTopicProgress } from '@/lib/supabase/queries';
 import { generateQuestions } from '@/lib/llm/question-generator';
 import type { StudentContext, TopicContext } from '@/types/learning';
+import type { Database } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,12 +95,14 @@ export async function POST(request: NextRequest) {
 
     // Store questions in session if sessionId is provided
     if (sessionId) {
-      await supabase
-        .from('learning_sessions')
+      type SessionUpdate = Database['public']['Tables']['learning_sessions']['Update'];
+
+      await (supabase
+        .from('learning_sessions') as any)
         .update({
           performance_summary: { questions } as any,
           updated_at: new Date().toISOString(),
-        } as any)
+        } satisfies SessionUpdate)
         .eq('id', sessionId);
 
       console.log('[API] Stored questions in session:', sessionId);

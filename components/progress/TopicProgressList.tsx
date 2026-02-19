@@ -123,9 +123,9 @@ function TopicProgressCard({
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full transition-all ${
-                    confidence_score >= 0.8
+                    (confidence_score || 0) >= 0.8
                       ? 'bg-green-500'
-                      : confidence_score >= 0.6
+                      : (confidence_score || 0) >= 0.6
                       ? 'bg-yellow-500'
                       : 'bg-blue-500'
                   }`}
