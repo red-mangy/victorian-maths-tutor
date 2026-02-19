@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getStudentByAuthId, saveQuestionInteraction } from '@/lib/supabase/queries';
 import { evaluateAnswer } from '@/lib/llm/answer-evaluator';
 import type { StudentContext, GeneratedQuestion } from '@/types/learning';
+import type { Database } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,14 +88,16 @@ export async function POST(request: NextRequest) {
 
       if (existingInteraction) {
         // Update existing interaction (this is a retry)
+        const updateData: Database['public']['Tables']['question_interactions']['Update'] = {
+          student_answer: studentAnswer,
+          is_correct: evaluation.is_correct,
+          llm_evaluation: JSON.stringify(evaluation),
+          llm_feedback: evaluation.feedback,
+        };
+
         await supabase
           .from('question_interactions')
-          .update({
-            student_answer: studentAnswer,
-            is_correct: evaluation.is_correct,
-            llm_evaluation: JSON.stringify(evaluation),
-            llm_feedback: evaluation.feedback,
-          })
+          .update(updateData)
           .eq('id', existingInteraction.id);
 
         console.log('[API] Updated existing question interaction (retry)');
@@ -127,12 +130,14 @@ export async function POST(request: NextRequest) {
         } else {
           console.log('[API] Question count for session:', count);
 
+          const sessionUpdateData: Database['public']['Tables']['learning_sessions']['Update'] = {
+            questions_completed: count || 0,
+            updated_at: new Date().toISOString()
+          };
+
           const { error: updateError } = await supabase
             .from('learning_sessions')
-            .update({
-              questions_completed: count || 0,
-              updated_at: new Date().toISOString()
-            })
+            .update(sessionUpdateData)
             .eq('id', sessionId);
 
           if (updateError) {
