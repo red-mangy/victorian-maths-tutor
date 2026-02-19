@@ -77,16 +77,16 @@ export async function POST(request: NextRequest) {
     // Save or update question interaction in database
     if (sessionId) {
       // Check if this question has already been answered in this session (for retries)
-      const { data: existingInteraction } = await supabase
+      const { data: existingInteraction, error: fetchError } = await supabase
         .from('question_interactions')
         .select('id')
         .eq('session_id', sessionId)
         .eq('question_text', questionText)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (existingInteraction) {
+      if (existingInteraction && !fetchError) {
         // Update existing interaction (this is a retry)
         type QuestionUpdate = Database['public']['Tables']['question_interactions']['Update'];
 
