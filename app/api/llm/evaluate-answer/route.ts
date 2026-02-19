@@ -94,8 +94,7 @@ export async function POST(request: NextRequest) {
             is_correct: evaluation.is_correct,
             llm_evaluation: JSON.stringify(evaluation),
             llm_feedback: evaluation.feedback,
-            updated_at: new Date().toISOString(),
-          } as any)
+          })
           .eq('id', existingInteraction.id);
 
         console.log('[API] Updated existing question interaction (retry)');
@@ -113,7 +112,7 @@ export async function POST(request: NextRequest) {
           llm_evaluation: JSON.stringify(evaluation),
           llm_feedback: evaluation.feedback,
           time_spent_seconds: 0, // Could be tracked on the client side
-        } as any);
+        });
 
         console.log('[API] Saved new question interaction');
 
@@ -133,7 +132,7 @@ export async function POST(request: NextRequest) {
             .update({
               questions_completed: count || 0,
               updated_at: new Date().toISOString()
-            } as any)
+            })
             .eq('id', sessionId);
 
           if (updateError) {
