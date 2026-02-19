@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       hints: [],
       correct_answer: correctAnswer,
       solution_steps: [],
+      focuses_on: 'General concept understanding', // Default focus
     };
 
     // Evaluate the answer using Claude
