@@ -55,18 +55,82 @@ export async function POST(request: NextRequest) {
     // Get student's progress on this topic
     const progress = await getTopicProgress(student.id, topicId);
 
-    // Build student context
+    // Fetch learning history - get completed sessions for this topic
+    const { data: sessions } = await supabase
+      .from('learning_sessions')
+      .select('performance_summary, ended_at')
+      .eq('student_id', student.id)
+      .eq('topic_id', topicId)
+      .eq('status', 'completed')
+      .order('ended_at', { ascending: false })
+      .limit(5); // Get last 5 sessions
+
+    // Extract concepts covered and analyze recent performance
+    const conceptsCovered: string[] = [];
+    const recentAccuracies: number[] = [];
+
+    if (sessions) {
+      sessions.forEach((session: any) => {
+        const summary = session.performance_summary;
+        if (summary?.concepts_covered) {
+          conceptsCovered.push(...summary.concepts_covered);
+        }
+        if (summary?.accuracy !== undefined) {
+          recentAccuracies.push(summary.accuracy);
+        }
+      });
+    }
+
+    // Calculate recent average accuracy (last 3 sessions)
+    const recentAvgAccuracy = recentAccuracies.length > 0
+      ? recentAccuracies.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(recentAccuracies.length, 3)
+      : progress && progress.questions_attempted > 0
+        ? Math.round((progress.questions_correct / progress.questions_attempted) * 100)
+        : 0;
+
+    // Determine adaptive difficulty instruction
+    let adaptiveInstruction = '';
+    let recommendedSkillLevel = progress?.skill_level || 'not_started';
+
+    if (sessions && sessions.length > 0) {
+      if (recentAvgAccuracy < 40) {
+        // Struggling significantly - step back to fundamentals
+        adaptiveInstruction = 'STEP BACK: Student is struggling (< 40% accuracy). Return to FOUNDATIONAL concepts with SIMPLER questions. Break concepts into smaller steps. Use more scaffolding and concrete examples.';
+        recommendedSkillLevel = 'learning'; // Ensure we're at basics
+      } else if (recentAvgAccuracy < 60) {
+        // Struggling - slow down progression
+        adaptiveInstruction = 'SLOW DOWN: Student is finding this challenging (< 60% accuracy). Stay at CURRENT level. Reinforce concepts with varied practice. Do NOT introduce new complexity yet.';
+        // Keep current level
+      } else if (recentAvgAccuracy < 70) {
+        // Building confidence - maintain pace
+        adaptiveInstruction = 'CONSOLIDATE: Student is building understanding (60-70% accuracy). Continue at current level with gentle progression. Introduce slight variations but maintain core difficulty.';
+      } else if (recentAvgAccuracy < 85) {
+        // Doing well - standard progression
+        adaptiveInstruction = 'STANDARD PROGRESSION: Student is performing well (70-85% accuracy). Gradually increase complexity. Introduce new aspects or applications of concepts.';
+        if (recommendedSkillLevel === 'learning') recommendedSkillLevel = 'practicing';
+      } else {
+        // Excelling - challenge them
+        adaptiveInstruction = 'CHALLENGE: Student is excelling (85%+ accuracy). Introduce more complex problems, multi-step reasoning, or real-world applications. Push boundaries while maintaining engagement.';
+        if (recommendedSkillLevel === 'practicing') recommendedSkillLevel = 'mastered';
+      }
+    }
+
+    // Build learning history with performance analysis
+    const learningHistory = {
+      concepts_covered: [...new Set(conceptsCovered)], // Remove duplicates
+      total_sessions: sessions?.length || 0,
+      recent_accuracy: recentAvgAccuracy,
+      adaptive_instruction: adaptiveInstruction
+    };
+
+    // Build student context with adaptive skill level
     const studentContext: StudentContext = {
       student_id: student.id,
       first_name: student.first_name,
       grade_level: student.grade_level,
       curriculum_level: student.curriculum_level || topic.level,
-      skill_level: progress?.skill_level || 'not_started',
-      recent_accuracy: progress
-        ? progress.questions_attempted > 0
-          ? Math.round((progress.questions_correct / progress.questions_attempted) * 100)
-          : 0
-        : 0,
+      skill_level: recommendedSkillLevel, // Use adaptive skill level
+      recent_accuracy: Math.round(recentAvgAccuracy),
       strengths: progress?.strengths || [],
       weaknesses: progress?.weaknesses || [],
     };
@@ -83,12 +147,14 @@ export async function POST(request: NextRequest) {
       elaborations: topic.elaborations || undefined,
     };
 
-    // Generate questions using Claude
+    // Generate questions using Claude with learning history
     console.log('[API] Generating questions for:', topic.title);
+    console.log('[API] Learning history:', learningHistory);
     const questions = await generateQuestions(
       studentContext,
       topicContext,
-      numQuestions
+      numQuestions,
+      learningHistory
     );
 
     console.log('[API] Generated', questions.length, 'questions');

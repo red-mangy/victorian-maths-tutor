@@ -32,10 +32,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get session details
+    // Get session details including questions
     const { data: session, error: sessionError } = await supabase
       .from('learning_sessions')
-      .select('student_id, topic_id')
+      .select('student_id, topic_id, performance_summary')
       .eq('id', sessionId)
       .single();
 
@@ -46,7 +46,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update session status
+    // Extract concepts covered from the questions in this session
+    const sessionData = session.performance_summary as any;
+    const concepts_covered: string[] = [];
+
+    if (sessionData?.questions) {
+      sessionData.questions.forEach((q: any) => {
+        if (q.focuses_on) {
+          concepts_covered.push(q.focuses_on);
+        }
+      });
+    }
+
+    // Update session status with concepts covered
     const { error: updateError } = await supabase
       .from('learning_sessions')
       .update({
@@ -59,6 +71,8 @@ export async function POST(request: NextRequest) {
           accuracy: questionsCompleted > 0
             ? Math.round((questionsCorrect / questionsCompleted) * 100)
             : 0,
+          concepts_covered, // Save what was learned in this session
+          questions: sessionData?.questions || [], // Keep the questions
         },
       } as any)
       .eq('id', sessionId);

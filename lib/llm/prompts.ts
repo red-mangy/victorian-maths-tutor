@@ -40,10 +40,20 @@ CORE PRINCIPLES:
 export function buildQuestionGenerationPrompt(
   studentContext: StudentContext,
   topicContext: TopicContext,
-  numQuestions: number = 5
+  numQuestions: number = 5,
+  learningHistory?: {
+    concepts_covered: string[];
+    total_sessions: number;
+    recent_accuracy?: number;
+    adaptive_instruction?: string;
+  }
 ): string {
   const { grade_level, skill_level, recent_accuracy, weaknesses, strengths } = studentContext;
-  const { code, title, description, elaborations } = topicContext;
+  const { code, title, description, elaborations} = topicContext;
+
+  const previouslyCovered = learningHistory?.concepts_covered || [];
+  const totalSessions = learningHistory?.total_sessions || 0;
+  const adaptiveInstruction = learningHistory?.adaptive_instruction || '';
 
   return `You are an expert mathematics tutor for Victorian curriculum students in Australia.
 
@@ -52,8 +62,12 @@ STUDENT CONTEXT:
 - Current Topic: ${code} - ${title}
 - Skill Level: ${skill_level}
 - Recent Accuracy: ${recent_accuracy}%
+- Total Sessions on This Topic: ${totalSessions}
 ${strengths && strengths.length > 0 ? `- Strengths (concepts already mastered): ${strengths.join(', ')}` : ''}
 ${weaknesses && weaknesses.length > 0 ? `- Weaknesses (concepts needing practice): ${weaknesses.join(', ')}` : ''}
+${previouslyCovered.length > 0 ? `\n**PREVIOUSLY COVERED IN THIS TOPIC** (DO NOT repeat these - build on them instead):\n${previouslyCovered.map((c, i) => `${i + 1}. ${c}`).join('\n')}\n` : '\n**FIRST TIME WITH THIS TOPIC** - Start with core fundamentals!\n'}
+
+${adaptiveInstruction ? `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠️  CRITICAL ADAPTIVE DIFFICULTY INSTRUCTION (MUST FOLLOW):\n${adaptiveInstruction}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` : ''}
 
 TOPIC DETAILS:
 ${description}
@@ -91,11 +105,13 @@ CRITICAL PROGRESSIVE LEARNING REQUIREMENTS:
    - But approach from different angles (vary contexts, representations)
    - Build from simpler to more complex within the weakness area
 
-6. **Variety and Freshness**:
+6. **Variety and Freshness** (CRITICAL FOR CONTINUITY):
+   - NEVER repeat concepts already covered (listed above)
+   - If concepts have been covered, introduce NEW aspects or applications
    - Vary problem contexts (money, measurement, objects, scenarios)
    - Change numbers and values between questions
    - Use different Australian contexts (sports, shopping, travel, cooking)
-   - Never ask identical questions
+   - Think: "What new ground can I cover within this topic?"
 
 7. **Developmental Appropriateness**:
    - Year 4-6: Concrete examples, simple language, visual scenarios
@@ -139,7 +155,11 @@ EXAMPLE PROGRESSION (Decimal operations):
 - Question 4 (combines): "A recipe needs 2.5 cups of flour and 1.75 cups of sugar. How much more flour than sugar?" - Addition + subtraction
 - Question 5 (applies): "Three friends share a bill: $12.50, $8.75, and $15.25. What's the total?" - Multiple decimals, real application
 
-IMPORTANT:
+CRITICAL FOR CONTINUOUS LEARNING:
+- If this is NOT the first session, you MUST introduce NEW concepts/applications not previously covered
+- DO NOT repeat basic questions they've already answered
+- Build on their existing knowledge to explore NEW territory within the topic
+- Each session should take them further in their learning journey
 - Return only valid JSON, no additional text or markdown formatting
 - Ensure each question builds on or extends previous learning
 - Questions should show clear progression in complexity or concept development`;

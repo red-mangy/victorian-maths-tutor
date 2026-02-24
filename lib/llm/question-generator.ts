@@ -19,13 +19,15 @@ import type {
 export async function generateQuestions(
   studentContext: StudentContext,
   topicContext: TopicContext,
-  numQuestions: number = 5
+  numQuestions: number = 5,
+  learningHistory?: { concepts_covered: string[]; total_sessions: number }
 ): Promise<GeneratedQuestion[]> {
-  // Build the prompt with context
+  // Build the prompt with context and learning history
   const prompt = buildQuestionGenerationPrompt(
     studentContext,
     topicContext,
-    numQuestions
+    numQuestions,
+    learningHistory
   );
 
   // Use Sonnet for Year 10 topics (more complex) or Haiku for faster generation on simpler topics
