@@ -16,7 +16,9 @@ export const metadata: Metadata = {
   title: "Victorian Maths Tutor",
   description: "AI-powered mathematics learning platform aligned with the Victorian Curriculum F-10. Personalized tutoring for students in Years 4-10.",
   icons: {
-    icon: '/icon.svg',
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+    ],
   },
 };
 

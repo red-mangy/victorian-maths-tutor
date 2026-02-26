@@ -16,7 +16,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Logo size={40} />
+              <Logo size={52} />
               <span className="text-xl font-bold text-gray-900">Victorian Maths Tutor</span>
             </div>
             <div className="flex items-center space-x-4">
