@@ -80,11 +80,11 @@ function TopicProgressCard({
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
+      <CardContent className="p-4 md:p-6">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1">
             {/* Topic Title and Code */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="text-xs font-medium text-gray-500 uppercase">
                 {topic.code}
               </span>
@@ -94,15 +94,16 @@ function TopicProgressCard({
                 {config.icon} {config.label}
               </span>
             </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">
+            <h4 className="text-base md:text-lg font-semibold text-gray-900 mb-2">
               {topic.title}
             </h4>
 
             {/* Stats */}
-            <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
+            <div className="flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm text-gray-600 mb-4">
               <div className="flex items-center gap-1">
                 <span className="font-medium">{questions_attempted}</span>
-                <span>questions attempted</span>
+                <span className="hidden sm:inline">questions attempted</span>
+                <span className="sm:hidden">attempted</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="font-medium">{questions_correct}</span>
@@ -115,7 +116,7 @@ function TopicProgressCard({
             </div>
 
             {/* Progress Bar */}
-            <div className="mb-4">
+            <div className="mb-4 md:mb-0">
               <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                 <span>Confidence</span>
                 <span>{Math.round((confidence_score || 0) * 100)}%</span>
@@ -136,9 +137,9 @@ function TopicProgressCard({
           </div>
 
           {/* Action Button */}
-          <div className="ml-4">
-            <Link href={`/learn/${topic.id}`}>
-              <Button variant="outline" size="sm">
+          <div className="md:ml-4">
+            <Link href={`/learn/${topic.id}`} className="block">
+              <Button variant="outline" size="sm" fullWidth className="md:w-auto md:min-w-[100px]">
                 {skill_level === 'mastered' ? 'Review' : 'Continue'}
               </Button>
             </Link>

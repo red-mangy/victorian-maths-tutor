@@ -30,20 +30,20 @@ export function DashboardHeader({ student }: DashboardHeaderProps) {
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="container mx-auto px-4 py-4 max-w-7xl">
+      <div className="container mx-auto px-3 md:px-4 py-3 md:py-4 max-w-7xl">
         <div className="flex items-center justify-between">
           {/* Logo and Title */}
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-              <Logo size={48} />
-              <h1 className="text-2xl font-bold text-blue-600">
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <Link href="/dashboard" className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity">
+              <Logo size={36} className="md:w-12 md:h-12" />
+              <h1 className="hidden sm:block text-lg md:text-2xl font-bold text-blue-600">
                 Victorian Maths Tutor
               </h1>
             </Link>
           </div>
 
           {/* Student Info and Navigation */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2 md:space-x-6">
             {/* Navigation Links */}
             <nav className="hidden md:flex items-center space-x-4">
               <Link
@@ -61,8 +61,8 @@ export function DashboardHeader({ student }: DashboardHeaderProps) {
             </nav>
 
             {/* Student Info */}
-            <div className="flex items-center space-x-3">
-              <div className="text-right">
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-gray-900">
                   {student.first_name} {student.last_name}
                 </p>
@@ -72,7 +72,7 @@ export function DashboardHeader({ student }: DashboardHeaderProps) {
               </div>
 
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm md:text-base">
                 {student.first_name.charAt(0).toUpperCase()}
               </div>
             </div>
@@ -82,9 +82,14 @@ export function DashboardHeader({ student }: DashboardHeaderProps) {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-gray-600 hover:text-gray-900 cursor-pointer"
+              className="text-gray-600 hover:text-gray-900 cursor-pointer text-xs md:text-sm px-2 md:px-3"
             >
-              Logout
+              <span className="hidden sm:inline">Logout</span>
+              <span className="sm:hidden">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </span>
             </Button>
           </div>
         </div>

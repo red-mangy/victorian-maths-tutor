@@ -33,18 +33,18 @@ export function RecentBadges({ stats }: RecentBadgesProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">🏆 Your Badges</CardTitle>
+          <CardTitle className="text-lg md:text-xl">🏆 Your Badges</CardTitle>
           <Link
             href="/progress#badges"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-xs md:text-sm text-blue-600 hover:text-blue-700 font-medium whitespace-nowrap"
           >
             View All ({earnedBadges.length})
           </Link>
         </div>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-4 md:p-6">
         {recentBadges.length > 0 ? (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
             {recentBadges.map((badge) => (
               <BadgeCard
                 key={badge.id}
@@ -55,7 +55,7 @@ export function RecentBadges({ stats }: RecentBadgesProps) {
             ))}
           </div>
         ) : (
-          <p className="text-gray-600 text-center py-4">
+          <p className="text-gray-600 text-center py-4 text-sm">
             Answer more questions to earn badges!
           </p>
         )}

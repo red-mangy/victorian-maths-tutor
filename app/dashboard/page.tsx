@@ -18,6 +18,7 @@ import { ResumeSession } from '@/components/dashboard/ResumeSession';
 import { StatsOverview } from '@/components/dashboard/StatsOverview';
 import { TopicGrid } from '@/components/dashboard/TopicGrid';
 import { RecentBadges } from '@/components/badges/RecentBadges';
+import { MobileWarning } from '@/components/ui/MobileWarning';
 
 export const metadata = {
   title: 'Dashboard | Victorian Maths Tutor',
@@ -70,6 +71,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader student={student} />
+      <MobileWarning />
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Resume Learning Card */}
@@ -91,10 +93,10 @@ export default async function DashboardPage() {
 
         {/* Topics Grid */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
             Mathematics Topics
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
             Choose a topic to start learning. Topics are organized by year level
             and strand.
           </p>

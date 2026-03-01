@@ -45,25 +45,25 @@ export default async function ProgressPage() {
 
       {/* Page Title */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             Your Progress
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-xs md:text-sm text-gray-600">
             Track your learning journey and celebrate your achievements!
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="space-y-6 md:space-y-8">
           {/* Overall Statistics */}
           <ProgressOverview stats={stats} studentName={student.first_name} />
 
           {/* Badge Showcase */}
           <div id="badges">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
               Badge Collection 🏆
             </h2>
             <BadgeShowcase stats={stats} />
@@ -72,7 +72,7 @@ export default async function ProgressPage() {
           {/* Topic Progress */}
           {progressData.length > 0 ? (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
                 Topics You've Practiced
               </h2>
               <TopicProgressList progressData={progressData} />

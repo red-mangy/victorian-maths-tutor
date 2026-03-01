@@ -13,21 +13,25 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="border-b border-gray-200 bg-white">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-3 md:px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Logo size={52} />
-              <span className="text-xl font-bold text-gray-900">Victorian Maths Tutor</span>
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <Logo size={45} className="md:w-[52px] md:h-[52px]" />
+              <span className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+                <span className="hidden sm:inline">Victorian Maths Tutor</span>
+                <span className="sm:hidden">VicMaths Tutor</span>
+              </span>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/auth/login">
-                <Button variant="outline" size="md">
+            <div className="flex items-center space-x-2 md:space-x-4">
+              <Link href="/auth/login" className="hidden sm:block">
+                <Button variant="outline" size="sm" className="md:text-base md:px-6 md:py-2">
                   Sign In
                 </Button>
               </Link>
               <Link href="/auth/signup">
-                <Button variant="primary" size="md">
-                  Get Started Free
+                <Button variant="primary" size="sm" className="md:text-base md:px-6 md:py-2">
+                  <span className="hidden sm:inline">Get Started Free</span>
+                  <span className="sm:hidden">Sign Up</span>
                 </Button>
               </Link>
             </div>
@@ -36,27 +40,28 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-blue-50 to-white">
+      <section className="py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
               Building Strong Minds Through Mathematics
             </h1>
-            <p className="text-xl md:text-2xl text-gray-700 mb-8 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-700 mb-6 md:mb-8 leading-relaxed">
               Empowering Victorian students to excel in mathematics, develop logical thinking,
               and master problem-solving skills that last a lifetime.
             </p>
-            <div className="bg-blue-600 text-white px-6 py-3 rounded-full inline-block mb-8 font-semibold">
-              100% Free • Victorian Curriculum Aligned • Years 4-10
+            <div className="bg-blue-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-full inline-block mb-6 md:mb-8 font-semibold text-xs sm:text-sm md:text-base">
+              <span className="hidden sm:inline">100% Free • Victorian Curriculum Aligned • Years 4-10</span>
+              <span className="sm:hidden">100% Free • Years 4-10</span>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/signup">
-                <Button variant="primary" size="lg" className="min-w-[200px]">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+              <Link href="/auth/signup" className="w-full sm:w-auto">
+                <Button variant="primary" size="lg" fullWidth className="sm:min-w-[200px]">
                   Start Learning Today
                 </Button>
               </Link>
-              <Link href="/auth/login">
-                <Button variant="outline" size="lg" className="min-w-[200px]">
+              <Link href="/auth/login" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" fullWidth className="sm:min-w-[200px]">
                   Sign In
                 </Button>
               </Link>
