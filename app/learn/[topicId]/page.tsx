@@ -116,6 +116,7 @@ export default async function LearnPage({ params, searchParams }: LearnPageProps
         <LearningSession
           topic={topic}
           studentId={student.id}
+          studentLevel={student.curriculum_level || topic.level}
           resumeSessionId={sessionId}
         />
       </div>

@@ -37,6 +37,7 @@ interface EvaluationResult {
 interface LearningSessionProps {
   topic: CurriculumTopic;
   studentId: string;
+  studentLevel: number; // Year level 4-10
   resumeSessionId?: string;
 }
 
@@ -48,13 +49,16 @@ type SessionState =
   | 'showing_feedback'
   | 'completed';
 
-export function LearningSession({ topic, studentId, resumeSessionId }: LearningSessionProps) {
+export function LearningSession({ topic, studentId, studentLevel, resumeSessionId }: LearningSessionProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [viewingQuestionIndex, setViewingQuestionIndex] = useState(0); // Which question is being viewed
   const [sessionState, setSessionState] = useState<SessionState>('initializing');
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [studentAnswers, setStudentAnswers] = useState<string[]>([]);
+  const [evaluationHistory, setEvaluationHistory] = useState<(EvaluationResult | null)[]>([]); // Store all evaluations
+  const [currentAnswerDraft, setCurrentAnswerDraft] = useState<string>(''); // Preserve current answer draft
   const [correctCount, setCorrectCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [retryAttempts, setRetryAttempts] = useState<number>(0);
@@ -109,6 +113,7 @@ export function LearningSession({ topic, studentId, resumeSessionId }: LearningS
         setSessionId(session.id);
         setQuestions(loadedQuestions);
         setCurrentQuestionIndex(resumeIndex);
+        setViewingQuestionIndex(resumeIndex);
 
         // If all questions are answered, need to generate more
         if (resumeIndex >= loadedQuestions.length) {
@@ -209,6 +214,11 @@ export function LearningSession({ topic, studentId, resumeSessionId }: LearningS
       const evaluationResult = await response.json();
       setEvaluation(evaluationResult);
 
+      // Store evaluation in history
+      const newHistory = [...evaluationHistory];
+      newHistory[currentQuestionIndex] = evaluationResult;
+      setEvaluationHistory(newHistory);
+
       if (evaluationResult.is_correct) {
         setCorrectCount(correctCount + 1);
       }
@@ -230,13 +240,100 @@ export function LearningSession({ topic, studentId, resumeSessionId }: LearningS
   const handleNextQuestion = () => {
     setEvaluation(null);
     setRetryAttempts(0); // Reset retry attempts for next question
+    setCurrentAnswerDraft(''); // Clear draft for new question
 
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+      setViewingQuestionIndex(nextIndex);
+
+      // Restore draft if it exists for next question (e.g., if they navigated back)
+      if (studentAnswers[nextIndex]) {
+        setCurrentAnswerDraft(studentAnswers[nextIndex]);
+      }
+
       setSessionState('answering');
     } else {
       completeSession();
     }
+  };
+
+  // Navigate to a specific question (for review)
+  const handleNavigateToQuestion = async (index: number) => {
+    // Can only navigate to answered questions or current question
+    if (index > currentQuestionIndex) return;
+
+    setViewingQuestionIndex(index);
+
+    // If navigating to a previously answered question, show its evaluation
+    if (index < currentQuestionIndex) {
+      // Check if we already have the evaluation in memory
+      if (evaluationHistory[index]) {
+        setEvaluation(evaluationHistory[index]);
+        setSessionState('showing_feedback');
+      } else {
+        // Need to fetch from database (for resumed sessions)
+        await loadPreviousQuestionData(index);
+      }
+    } else {
+      // Navigating back to current question
+      // Check if current question has already been evaluated
+      if (evaluationHistory[index]) {
+        // Already answered and evaluated - show feedback
+        setEvaluation(evaluationHistory[index]);
+        setSessionState('showing_feedback');
+      } else {
+        // Not yet answered - show input with draft if available
+        setEvaluation(null);
+        // Restore draft from studentAnswers if it exists (preserves unsaved work)
+        if (studentAnswers[index]) {
+          setCurrentAnswerDraft(studentAnswers[index]);
+        }
+        setSessionState('answering');
+      }
+    }
+  };
+
+  // Load previous question data from database (for resumed sessions)
+  const loadPreviousQuestionData = async (index: number) => {
+    if (!sessionId) return;
+
+    try {
+      setSessionState('loading_question');
+
+      const response = await fetch(`/api/sessions/question-history?sessionId=${sessionId}&questionIndex=${index}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to load question history');
+      }
+
+      const { studentAnswer, evaluation } = await response.json();
+
+      // Store in arrays for future use
+      const newAnswers = [...studentAnswers];
+      newAnswers[index] = studentAnswer;
+      setStudentAnswers(newAnswers);
+
+      const newHistory = [...evaluationHistory];
+      newHistory[index] = evaluation;
+      setEvaluationHistory(newHistory);
+
+      setEvaluation(evaluation);
+      setSessionState('showing_feedback');
+    } catch (err) {
+      console.error('Error loading question history:', err);
+      setError('Failed to load previous question. Please try again.');
+      setSessionState('answering');
+    }
+  };
+
+  // Handle answer draft changes (preserve as student types)
+  const handleAnswerDraftChange = (newValue: string) => {
+    setCurrentAnswerDraft(newValue);
+    // Also save to studentAnswers array to preserve across navigation
+    const newAnswers = [...studentAnswers];
+    newAnswers[currentQuestionIndex] = newValue;
+    setStudentAnswers(newAnswers);
   };
 
   const completeSession = async () => {
@@ -306,52 +403,114 @@ export function LearningSession({ topic, studentId, resumeSessionId }: LearningS
 
   // Render active learning session
   const currentQuestion = questions[currentQuestionIndex];
+  const viewingQuestion = questions[viewingQuestionIndex];
+  const isReviewingPastQuestion = viewingQuestionIndex < currentQuestionIndex;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Main Content - Question and Answer */}
       <div className="lg:col-span-2 space-y-6">
+        {/* Review Mode Banner */}
+        {isReviewingPastQuestion && (
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span className="text-sm font-medium text-yellow-800">
+                  Reviewing Question {viewingQuestionIndex + 1}
+                </span>
+              </div>
+              <button
+                onClick={() => handleNavigateToQuestion(currentQuestionIndex)}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Return to Question {currentQuestionIndex + 1} →
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Question */}
         <Question
-          questionText={currentQuestion.question_text}
-          questionNumber={currentQuestionIndex + 1}
+          questionText={viewingQuestion.question_text}
+          questionNumber={viewingQuestionIndex + 1}
           totalQuestions={questions.length}
-          difficulty={currentQuestion.difficulty}
+          difficulty={viewingQuestion.difficulty}
         />
 
         {/* Answer Input or Feedback */}
         {sessionState === 'showing_feedback' && evaluation ? (
-          <Feedback
-            isCorrect={evaluation.is_correct}
-            feedback={evaluation.feedback}
-            encouragement={evaluation.encouragement}
-            onNextQuestion={handleNextQuestion}
-            onTryAgain={handleTryAgain}
-            isLastQuestion={currentQuestionIndex === questions.length - 1}
-            canRetry={retryAttempts < MAX_RETRIES}
-          />
+          <>
+            {/* Show previous answer when reviewing */}
+            {isReviewingPastQuestion && studentAnswers[viewingQuestionIndex] && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Your Answer:</h4>
+                <p className="text-gray-900">{studentAnswers[viewingQuestionIndex]}</p>
+              </div>
+            )}
+
+            <Feedback
+              isCorrect={evaluation.is_correct}
+              feedback={evaluation.feedback}
+              encouragement={evaluation.encouragement}
+              onNextQuestion={isReviewingPastQuestion ? () => handleNavigateToQuestion(currentQuestionIndex) : handleNextQuestion}
+              onTryAgain={isReviewingPastQuestion ? undefined : handleTryAgain}
+              isLastQuestion={currentQuestionIndex === questions.length - 1}
+              canRetry={!isReviewingPastQuestion && retryAttempts < MAX_RETRIES}
+            />
+          </>
         ) : (
           <AnswerInput
             onSubmit={handleSubmitAnswer}
             isSubmitting={sessionState === 'evaluating'}
-            disabled={sessionState !== 'answering'}
+            disabled={sessionState !== 'answering' || isReviewingPastQuestion}
+            yearLevel={studentLevel}
+            value={currentAnswerDraft}
+            onValueChange={handleAnswerDraftChange}
           />
         )}
 
         {/* Progress indicator */}
-        <div className="flex items-center justify-center gap-2">
-          {questions.map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 w-8 rounded-full transition-colors ${
-                index < currentQuestionIndex
-                  ? 'bg-gray-400'
-                  : index === currentQuestionIndex
-                  ? 'bg-blue-500'
-                  : 'bg-gray-200'
-              }`}
-            />
-          ))}
+        <div className="space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            {questions.map((_, index) => {
+              const isAnswered = index < currentQuestionIndex;
+              const isCurrent = index === currentQuestionIndex;
+              const isViewing = index === viewingQuestionIndex;
+              const isClickable = isAnswered || isCurrent;
+
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleNavigateToQuestion(index)}
+                  disabled={!isClickable}
+                  className={`h-2 w-8 rounded-full transition-all ${
+                    isAnswered
+                      ? 'bg-gray-400 hover:bg-gray-500 cursor-pointer'
+                      : isCurrent
+                      ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                      : 'bg-gray-200 cursor-not-allowed'
+                  } ${isViewing ? 'ring-2 ring-blue-300 ring-offset-2' : ''} disabled:opacity-50`}
+                  title={
+                    isAnswered
+                      ? `Question ${index + 1} (answered - click to review)`
+                      : isCurrent
+                      ? `Question ${index + 1} (current)`
+                      : `Question ${index + 1} (upcoming)`
+                  }
+                />
+              );
+            })}
+          </div>
+          {currentQuestionIndex > 0 && (
+            <p className="text-xs text-center text-gray-500">
+              Click on gray bars to review previous questions
+            </p>
+          )}
         </div>
       </div>
 
